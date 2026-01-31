@@ -5,23 +5,6 @@ import json
 import re
 from datetime import datetime, timedelta
 
-class ForensicAnalyzer:
-    """
-    Forensic Analysis Module for Mobile Telephony Data.
-    Analyzes SMS and Call logs for suspicious behavior, malware indicators, and integrity anomalies.
-    """
-
-    def __init__(self, call_logs, sms_logs):
-        """
-        Initialize with pandas DataFrames.
-        :param call_logs: DataFrame with columns [caller_number, receiver_number, timestamp, duration, call_type]
-        :param sms_logs: DataFrame with columns [sender, receiver, timestamp, message_content, contains_link]
-        """
-        self.calls = call_logs.copy()
-        self.sms = sms_logs.copy()
-        
-        # specific datetime conversion with error coercion to handle standard formats
-        self.calls['timestamp'] = pd.to_datetime(self.calls['timestamp'], errors='coerce')
         self.sms['timestamp'] = pd.to_datetime(self.sms['timestamp'], errors='coerce')
         
         self.risk_report = {

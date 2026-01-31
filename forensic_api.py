@@ -28,26 +28,69 @@ def compute_hash(data):
     encoded = json.dumps(data, sort_keys=True).encode()
     return hashlib.sha256(encoded).hexdigest()
 
+import re
+
 def analyze_risk(sms):
-    """Rule-based risk analysis for SMS."""
+    """
+    Advanced Forensic Analysis Model
+    Detects patterns of: Phishing, Malware, Social Engineering, and Data Exfiltration
+    """
     score = 0
-    keywords = ["click", "urgent", "verify", "bit.ly"]
-    for kw in keywords:
-        if kw in sms['content'].lower():
-            score += 25
+    content = sms.get('content', '').lower()
+    findings = []
+
+    # 1. Phishing & Urgency Patterns
+    urgency_keywords = ["urgent", "action required", "verify", "suspended", "security alert", "help desk"]
+    for kw in urgency_keywords:
+        if kw in content:
+            score += 15
+            findings.append(f"Urgency keyword: {kw}")
+
+    # 2. Financial / Sensitve Target Patterns
+    financial_keywords = ["bank", "login", "password", "crypto", "wallet", "invoice", "payment", "amazon", "paypal"]
+    for kw in financial_keywords:
+        if kw in content:
+            score += 10
+            findings.append(f"Sensitive target: {kw}")
+
+    # 3. Malicious Link Detection (Regex)
+    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    shortener_pattern = re.compile(r'(bit\.ly|t\.co|goo\.gl|tinyurl\.com)')
     
+    urls = url_pattern.findall(content)
+    if urls:
+        score += 25
+        findings.append(f"Link detected: {len(urls)} URLs")
+        if shortener_pattern.search(content):
+            score += 20
+            findings.append("URL shortener detected (High risk)")
+
+    # 4. File Extension / Payload Patterns
+    payload_pattern = re.compile(r'\.(apk|exe|bat|sh|php|js|zip|scr)')
+    if payload_pattern.search(content):
+        score += 50
+        findings.append("Potential malware payload file reference")
+
+    # 5. Data Exfiltration / IP Patterns
+    ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
+    if ip_pattern.search(content):
+        score += 30
+        findings.append("IP Address detected (Potential C2 communications)")
+
+    # Final Risk Level
     level = "LOW"
-    if score >= 50: level = "HIGH"
-    elif score >= 25: level = "MEDIUM"
+    if score >= 70: level = "CRITICAL"
+    elif score >= 50: level = "HIGH"
+    elif score >= 30: level = "MEDIUM"
     
-    return score, level
+    return score, level, findings
 
 @app.route('/api/analyze', methods=['GET'])
 def get_analysis():
     """Runs automated analysis and returns risk scores."""
     results = []
     for s in SMS_LOGS:
-        score, level = analyze_risk(s)
+        score, level, _ = analyze_risk(s) # Updated to unpack findings
         results.append({
             "id": s['id'],
             "content": s['content'],
@@ -134,10 +177,14 @@ def add_forensic_data():
             "content": data.get('content', '')
         }
         SMS_LOGS.append(new_sms)
-        score, level = analyze_risk(new_sms)
+        score, level, findings = analyze_risk(new_sms)
         return jsonify({
             "status": "ingested",
-            "analysis": {"score": score, "level": level},
+            "analysis": {
+                "score": score, 
+                "level": level,
+                "findings": findings
+            },
             "hash": compute_hash(new_sms)
         })
         

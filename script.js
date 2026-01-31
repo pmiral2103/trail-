@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!payload.content && category === 'sms') { alert("Please enter SMS content"); return; }
 
-        // Local Simulation for instant feedback
+        // Local Simulation for instant feedback (will be replaced by actual fetch to /api/add-data later)
         const riskResult = simulateAnalysis(payload);
 
         // Add to timeline
@@ -71,17 +71,32 @@ document.addEventListener('DOMContentLoaded', () => {
             risk: riskResult.level
         };
 
-        timelineData.unshift(newEvent); // Add to top
+        timelineData.unshift(newEvent);
         renderTimeline();
 
-        // Show Analysis Report
+        // Show Analysis Report with Forensic Detail
+        let findingsHtml = riskResult.findings ? riskResult.findings.map(f => `<li>• ${f}</li>`).join('') : '<li>• No specific automated threats identified.</li>';
+
         resultsArea.innerHTML = `
-            <div class="card glass risk-${riskResult.level}" style="border-left: 5px solid ${getRiskColor(riskResult.level)};">
-                <h4 style="color: ${getRiskColor(riskResult.level)}">Forensic Analysis Report</h4>
-                <p><strong>Artifact:</strong> ${category.toUpperCase()} Log</p>
-                <p><strong>Risk Score:</strong> ${riskResult.score}/100</p>
-                <p><strong>Verdict:</strong> ${riskResult.verdict}</p>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">Hash: ${Math.random().toString(36).substring(2, 15)} (Verified)</p>
+            <div class="card glass risk-${riskResult.level}" style="border-left: 5px solid ${getRiskColor(riskResult.level)}; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <h4 style="color: ${getRiskColor(riskResult.level)}; margin-bottom: 10px;">> AI_FORENSIC_REPORT.TXT</h4>
+                        <p><strong>Artifact:</strong> ${category.toUpperCase()}</p>
+                        <p><strong>Calculated Risk:</strong> <span class="badge" style="background: ${getRiskColor(riskResult.level)}">${riskResult.level.toUpperCase()}</span></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="font-size: 0.7rem; color: var(--text-muted);">HASH: ${Math.random().toString(36).substring(2, 10).toUpperCase()}</p>
+                        <p style="font-size: 0.7rem; color: var(--text-muted);">TIMESTAMP: ${now}</p>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;">
+                    <p style="font-weight: bold; margin-bottom: 8px;">Forensic Findings:</p>
+                    <ul style="list-style: none; font-size: 0.9rem; color: #ff99aa;">
+                        ${findingsHtml}
+                    </ul>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.85rem; font-style: italic;">Verdict: ${riskResult.verdict}</p>
             </div>
         `;
 
@@ -92,21 +107,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function simulateAnalysis(data) {
         let score = 0;
+        let findings = [];
         let verdict = "Clean record. No immediate threats detected.";
 
         if (data.type === 'sms') {
             const content = data.content.toLowerCase();
-            if (content.includes('http') || content.includes('bit.ly')) { score += 40; verdict = "Unsafe link detected."; }
-            if (content.includes('verify') || content.includes('bank') || content.includes('urgent')) { score += 30; verdict = "Phishing keywords identified."; }
-            if (content.includes('.apk') || content.includes('.exe')) { score += 60; verdict = "Potential malware payload reference."; }
+            if (content.includes('http')) {
+                score += 30;
+                findings.push("Suspicious URL pattern detected");
+            }
+            if (content.includes('verify') || content.includes('bank')) {
+                score += 25;
+                findings.push("Phishing/Social Engineering keywords detected");
+            }
+            if (content.includes('.apk') || content.includes('.exe')) {
+                score += 50;
+                findings.push("Potential malware payload reference (.apk/.exe)");
+            }
+            if (score > 50) verdict = "High probability of malicious intent. Isolate artifact.";
         } else {
-            if (data.call_type === 'Missed') { score += 20; verdict = "Wangiri risk assessment required."; }
+            if (data.call_type === 'Missed') {
+                score += 20;
+                findings.push("Wangiri / Missed Call scam risk pattern");
+            }
             const hour = new Date(data.timestamp).getHours();
-            if (hour >= 0 && hour <= 5) { score += 30; verdict = "Suspicious activity during graveyard hours."; }
+            if (hour >= 0 && hour <= 5) {
+                score += 30;
+                findings.push("Anomalous activity during graveyard hours (00:00-05:00)");
+            }
         }
 
-        const level = score > 60 ? 'high' : (score > 30 ? 'med' : 'low');
-        return { score, level, verdict };
+        const level = score >= 70 ? 'critical' : (score >= 50 ? 'high' : (score >= 30 ? 'med' : 'low'));
+        return { score, level, verdict, findings };
     }
 
     function getRiskColor(level) {

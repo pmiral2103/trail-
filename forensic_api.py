@@ -5,11 +5,85 @@ import json
 from datetime import datetime
 from flask import Flask, jsonify, request
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+import joblib
+import os
 
-@app.route('/')
-def index():
-    return app.send_static_file('index.html')
+# --- AI Model Integration ---
+AI_MODEL_PATH = 'forensic_ai_model.pkl'
+AI_MODEL = None
+
+def load_ai_model():
+    global AI_MODEL
+    if os.path.exists(AI_MODEL_PATH):
+        AI_MODEL = joblib.load(AI_MODEL_PATH)
+        print("[AI] Forensic AI Model loaded successfully.")
+    else:
+        print("[AI] Warning: AI model not found. Using rule-based fallback.")
+
+load_ai_model()
+
+def analyze_risk(sms):
+    """
+    Hybrid Forensic Analysis:
+    Combines AI (ML) predictions with Regex-based safety checks.
+    """
+    content = sms.get('content', '').lower()
+    score = 0
+    findings = []
+    
+    # 1. AI Inference
+    ai_verdict = "LOW"
+    ai_confidence = 0
+    if AI_MODEL:
+        try:
+            prediction = AI_MODEL.predict([content])[0]
+            probs = AI_MODEL.predict_proba([content])[0]
+            ai_confidence = round(max(probs) * 100, 2)
+            ai_verdict = prediction
+            findings.append(f"AI Classification: {ai_verdict} ({ai_confidence}% confidence)")
+        except Exception as e:
+            print(f"AI Inference Error: {e}")
+
+    # 2. Rule-based Safety Net (Regex)
+    # Malicious Link Detection
+    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    shortener_pattern = re.compile(r'(bit\.ly|t\.co|goo\.gl|tinyurl\.com)')
+    
+    urls = url_pattern.findall(content)
+    if urls:
+        score += 25
+        findings.append(f"Link detected: {len(urls)} URL(s)")
+        if shortener_pattern.search(content):
+            score += 20
+            findings.append("Suspicious URL shortener used")
+
+    # Payload Patterns
+    if re.search(r'\.(apk|exe|bat|sh|php|js|zip|scr)', content):
+        score += 50
+        findings.append("Potential malware payload reference found")
+
+    # IP Address Detection
+    if re.search(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', content):
+        score += 30
+        findings.append("IP Address detected (Possible C2 server)")
+
+    # 3. Final Aggregation
+    # If AI says HIGH, boost score
+    if ai_verdict == "HIGH":
+        score += 40
+    elif ai_verdict == "MEDIUM":
+        score += 20
+
+    # Cap score at 100
+    final_score = min(score, 100)
+    
+    # Final Risk Level
+    level = "LOW"
+    if final_score >= 80: level = "CRITICAL"
+    elif final_score >= 50: level = "HIGH"
+    elif final_score >= 30: level = "MEDIUM"
+    
+    return final_score, level, findings
 
 # --- Mock Data ---
 CALL_LOGS = [

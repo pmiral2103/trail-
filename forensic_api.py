@@ -120,5 +120,47 @@ def view_evidence():
         "evidence_data": CALL_LOGS + SMS_LOGS
     })
 
+@app.route('/api/add-data', methods=['POST'])
+def add_forensic_data():
+    """Endpoint for real-time data ingestion and analysis."""
+    data = request.json
+    data_type = data.get('type')
+    
+    if data_type == 'sms':
+        new_sms = {
+            "id": len(SMS_LOGS) + 1,
+            "sender": data.get('sender', 'Unknown'),
+            "timestamp": data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            "content": data.get('content', '')
+        }
+        SMS_LOGS.append(new_sms)
+        score, level = analyze_risk(new_sms)
+        return jsonify({
+            "status": "ingested",
+            "analysis": {"score": score, "level": level},
+            "hash": compute_hash(new_sms)
+        })
+        
+    elif data_type == 'call':
+        new_call = {
+            "id": len(CALL_LOGS) + 1,
+            "caller": data.get('number', 'Unknown'),
+            "receiver": "Self",
+            "timestamp": data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            "duration": data.get('duration', '00:00'),
+            "type": data.get('call_type', 'Incoming')
+        }
+        CALL_LOGS.append(new_call)
+        # Basic rule: Missed calls from unknown numbers are suspicious
+        score = 40 if new_call['type'] == 'Missed' else 10
+        level = "MEDIUM" if score > 30 else "LOW"
+        return jsonify({
+            "status": "ingested",
+            "analysis": {"score": score, "level": level},
+            "hash": compute_hash(new_call)
+        })
+
+    return jsonify({"error": "invalid type"}), 400
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

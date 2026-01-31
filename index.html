@@ -83,90 +83,65 @@
     <!-- Data Analysis Demo Section -->
     <section id="analysis">
         <div class="container">
-            <h2 class="section-title">Live Data Analysis Preview</h2>
+            <h2 class="section-title">Dynamic Forensic Analysis</h2>
 
-            <!-- SMS Data -->
-            <div class="data-container">
-                <div class="data-header">
-                    <h3>> SMS_LOGS.DB</h3>
-                    <span class="badge">EXTRACTED</span>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <th>Sender/Receiver</th>
-                            <th>Type</th>
-                            <th>Message Content</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>2023-10-24 14:32:01</td>
-                            <td>+1 (555) 012-3456</td>
-                            <td>Incoming</td>
-                            <td>Meeting scheduled for 3 PM at the secure location.</td>
-                            <td class="status-in">Readd</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-24 14:35:12</td>
-                            <td>+1 (555) 012-3456</td>
-                            <td>Outgoing</td>
-                            <td>Copy that. Bringing the documents.</td>
-                            <td class="status-out">Sent</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-25 09:15:00</td>
-                            <td>Unknown</td>
-                            <td>Incoming</td>
-                            <td>Verification code: 884210. Do not share.</td>
-                            <td class="status-in">Unread</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="analysis-tabs" style="display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;">
+                <button class="btn btn-outline active" onclick="switchAnalysisTab('sms')">SMS Analyzer</button>
+                <button class="btn btn-outline" onclick="switchAnalysisTab('calls')">Call Analyzer</button>
             </div>
 
-            <!-- Call Logs Data -->
-            <div class="data-container">
+            <!-- SMS Analyzer Form -->
+            <div id="sms-analyzer" class="data-container glass" style="display: block;">
                 <div class="data-header">
-                    <h3>> CALL_HISTORY.LOG</h3>
-                    <span class="badge">DECRYPTED</span>
+                    <h3>> NEW_SMS_INGESTION.EXE</h3>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>DateTime</th>
-                            <th>Number</th>
-                            <th>Duration</th>
-                            <th>Type</th>
-                            <th>Location Hash</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>2023-10-24 10:05:23</td>
-                            <td>+1 (555) 987-6543</td>
-                            <td>00:12:45</td>
-                            <td class="status-in">Incoming</td>
-                            <td>Cell_ID_4421</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-24 18:20:11</td>
-                            <td>+1 (555) 111-2222</td>
-                            <td>00:00:00</td>
-                            <td class="status-missed">Missed</td>
-                            <td>Cell_ID_4425</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-25 11:30:45</td>
-                            <td>+1 (555) 012-3456</td>
-                            <td>00:05:30</td>
-                            <td class="status-out">Outgoing</td>
-                            <td>Cell_ID_3390</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <form id="sms-form" onsubmit="event.preventDefault(); submitForensicData('sms');"
+                    style="display: grid; gap: 15px; padding: 20px;">
+                    <div style="display: flex; gap: 15px;">
+                        <input type="text" id="sms-sender" placeholder="Sender Number/Name" class="btn-outline"
+                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                        <input type="text" id="sms-timestamp" placeholder="Timestamp (Auto if empty)"
+                            class="btn-outline"
+                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                    </div>
+                    <textarea id="sms-content" placeholder="Enter SMS Message Content for Analysis..."
+                        class="btn-outline"
+                        style="min-height: 80px; text-align: left; padding: 15px; border-radius: 8px; font-family: inherit;"></textarea>
+                    <button type="submit" class="btn btn-primary" style="width: 200px; margin: 0 auto;">Analyze &
+                        Ingest</button>
+                </form>
+            </div>
+
+            <!-- Call Analyzer Form -->
+            <div id="calls-analyzer" class="data-container glass" style="display: none;">
+                <div class="data-header">
+                    <h3>> CALL_LOG_SCANNER.EXE</h3>
+                </div>
+                <form id="calls-form" onsubmit="event.preventDefault(); submitForensicData('calls');"
+                    style="display: grid; gap: 15px; padding: 20px;">
+                    <div style="display: flex; gap: 15px;">
+                        <input type="text" id="call-number" placeholder="Phone Number" class="btn-outline"
+                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                        <select id="call-type" class="btn-outline"
+                            style="flex: 1; background: var(--bg-dark); color: var(--text-muted); border-radius: 8px; padding-left: 10px;">
+                            <option value="Incoming">Incoming</option>
+                            <option value="Outgoing">Outgoing</option>
+                            <option value="Missed">Missed</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <input type="text" id="call-duration" placeholder="Duration (e.g. 05:30)" class="btn-outline"
+                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                        <input type="text" id="call-timestamp" placeholder="Timestamp (Auto)" class="btn-outline"
+                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 200px; margin: 0 auto;">Process Call
+                        Log</button>
+                </form>
+            </div>
+
+            <div id="analysis-results" style="margin-top: 30px;">
+                <!-- Live analysis reports will appear here -->
             </div>
 
         </div>

@@ -1,0 +1,21 @@
+{
+    "summary": {
+        "total_risk_score": 100,
+        "risk_level": "HIGH"
+    },
+    "detections": {
+        "suspicious_behavior": [
+            "High frequency call volume detected: 4 calls at 2026-01-31 16:35:00",
+            "High repetition detected: 4 calls to +15550123"
+        ],
+        "malware_indicators": [
+            "Suspicious keyword 'urgent' found in SMS from +15551111: 'URGENT! Verify your bank accoun...'",
+            "Unsafe or short link detected in SMS from +15551111",
+            "Potential malware file reference detected in SMS from +1555Phish"
+        ],
+        "integrity_anomalies": [
+            "Integrity Breach: 1 call records have future timestamps",
+            "Data Integrity: 1 duplicate call records found"
+        ]
+    }
+}

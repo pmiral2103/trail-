@@ -22,6 +22,71 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 3, type: 'sms', title: 'Suspicious SMS', desc: 'Recv: "Meeting at 3 PM" from +1 (555) 012-3456', date: '2023-10-24 14:32:01', risk: 'low' }
     ];
 
+    // Get current formatted timestamp (YYYY-MM-DD HH:MM:SS)
+    window.getCurrentTimestamp = function () {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    // Auto-populate timestamps in forms
+    function autoPopulateTimestamps() {
+        const timestamp = getCurrentTimestamp();
+        const smsTime = document.getElementById('sms-timestamp');
+        const callTime = document.getElementById('call-timestamp');
+        if (smsTime && !smsTime.value) smsTime.value = timestamp;
+        if (callTime && !callTime.value) callTime.value = timestamp;
+    }
+
+    // Automatic Time Detection from SMS Content
+    function extractTimeFromText(text) {
+        // Patterns for: 10:30 PM, 3 PM, 15:00, 9am
+        const timePatterns = [
+            /\b((1[0-2]|0?[1-9]):([0-5][0-9])\s?([AaPp][Mm]))\b/i, // 10:30 PM
+            /\b((1[0-2]|0?[1-9])\s?([AaPp][Mm]))\b/i,             // 3 PM
+            /\b(([0-1]?[0-9]|2[0-3]):([0-5][0-9]))\b/             // 15:00
+        ];
+
+        for (let pattern of timePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                return match[0];
+            }
+        }
+        return null;
+    }
+
+    const smsContentArea = document.getElementById('sms-content');
+    if (smsContentArea) {
+        smsContentArea.addEventListener('input', (e) => {
+            const text = e.target.value;
+            const detectedTime = extractTimeFromText(text);
+            const smsTimeInput = document.getElementById('sms-timestamp');
+            const autoBadge = document.getElementById('sms-auto-status');
+
+            if (detectedTime) {
+                // If we found a time, try to prepend today's date if date is missing
+                const now = new Date();
+                const datePart = now.toISOString().split('T')[0];
+                let finalTimestamp = detectedTime;
+
+                // If it's just "3 PM", we might want to keep it or format it
+                // For now, let's just show the detected time or combine it
+                smsTimeInput.value = `${datePart} ${detectedTime}`;
+                autoBadge.style.display = 'inline-block';
+                smsTimeInput.style.borderColor = 'var(--secondary)';
+            } else {
+                autoBadge.style.display = 'none';
+                smsTimeInput.style.borderColor = '';
+            }
+        });
+    }
+
     // Switching Analysis Tabs
     window.switchAnalysisTab = function (type) {
         document.getElementById('sms-analyzer').style.display = type === 'sms' ? 'block' : 'none';
@@ -31,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const btns = document.querySelectorAll('.analysis-tabs .btn');
         btns[0].classList.toggle('active', type === 'sms');
         btns[1].classList.toggle('active', type === 'calls');
+
+        // Update timestamp when switching
+        autoPopulateTimestamps();
     };
 
     // Submitting Forensic Data
@@ -179,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Render
     renderTimeline();
+    autoPopulateTimestamps();
 
     // Filter Click Handlers
     filterBtns.forEach(btn => {
@@ -204,9 +273,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (smsCountEl) smsCountEl.innerText = "5 High-Risk";
     }
 
-    window.generateReport = function () {
-        alert("Integrity Check Pulse Sent...\nScanning database blocks...\nSHA-256 Verified: 0xFD67...89AB\nAll logs match the original acquisition hash.");
-        updateDashboard();
+    window.exportPDF = function () {
+        console.log('[AUDIT] Generating Forensic PDF Report...');
+
+        const element = document.body;
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `Forensic_Report_${new Date().getTime()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Add a temporary class to body for print styling during generation
+        document.body.classList.add('pdf-generating');
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            document.body.classList.remove('pdf-generating');
+            console.log('[AUDIT] PDF Report Generated Successfully.');
+        });
     };
 
     updateDashboard();

@@ -12,10 +12,20 @@
         rel="stylesheet">
     <!-- Styles -->
     <link rel="stylesheet" href="style.css">
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
     <div class="scanline"></div>
+
+    <!-- Print Only Header -->
+    <div class="print-only-report-header" style="display: none;">
+        <h1>FORENSIC ANALYSIS REPORT</h1>
+        <p>CASE ID: #DET-2026-89AB</p>
+        <p>INTEGRITY HASH: SHA-256: 8f92a1c7d2e4b5f6a7d8e9... (Verified)</p>
+        <hr style="margin: 20px 0; border: 0; border-top: 2px solid #000;">
+    </div>
 
     <!-- Navigation -->
     <header>
@@ -91,51 +101,87 @@
             </div>
 
             <!-- SMS Analyzer Form -->
-            <div id="sms-analyzer" class="data-container glass" style="display: block;">
+            <div id="sms-analyzer" class="data-container glass"
+                style="display: block; border-left: 4px solid var(--primary);">
                 <div class="data-header">
-                    <h3>> NEW_SMS_INGESTION.EXE</h3>
+                    <h3>> SMS_INGESTION_MODULE</h3>
+                    <div id="sms-auto-status" class="badge"
+                        style="display: none; background: var(--secondary); font-size: 0.7rem;">AUTO-TIME DETECTED</div>
                 </div>
                 <form id="sms-form" onsubmit="event.preventDefault(); submitForensicData('sms');"
-                    style="display: grid; gap: 15px; padding: 20px;">
-                    <div style="display: flex; gap: 15px;">
-                        <input type="text" id="sms-sender" placeholder="Sender Number/Name" class="btn-outline"
-                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
-                        <input type="text" id="sms-timestamp" placeholder="Timestamp (Auto if empty)"
-                            class="btn-outline"
-                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                    style="display: grid; gap: 20px; padding: 25px;">
+                    <div class="form-row" style="display: flex; gap: 20px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="sms-sender"
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Sender
+                                Identifier</label>
+                            <input type="text" id="sms-sender" placeholder="+1..." class="btn-outline"
+                                style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label for="sms-timestamp"
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Event
+                                Timestamp</label>
+                            <input type="text" id="sms-timestamp" placeholder="YYYY-MM-DD HH:MM:SS" class="btn-outline"
+                                style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                        </div>
                     </div>
-                    <textarea id="sms-content" placeholder="Enter SMS Message Content for Analysis..."
-                        class="btn-outline"
-                        style="min-height: 80px; text-align: left; padding: 15px; border-radius: 8px; font-family: inherit;"></textarea>
-                    <button type="submit" class="btn btn-primary" style="width: 200px; margin: 0 auto;">Analyze &
-                        Ingest</button>
+                    <div class="input-group">
+                        <label for="sms-content"
+                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Message
+                            Content (Analysis Body)</label>
+                        <textarea id="sms-content" placeholder="Paste SMS content here for forensic analysis..."
+                            class="btn-outline"
+                            style="width: 100%; min-height: 120px; text-align: left; padding: 15px; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 220px; margin: 10px auto 0;">Injest &
+                        Analyze SMS</button>
                 </form>
             </div>
 
             <!-- Call Analyzer Form -->
-            <div id="calls-analyzer" class="data-container glass" style="display: none;">
+            <div id="calls-analyzer" class="data-container glass"
+                style="display: none; border-left: 4px solid var(--accent);">
                 <div class="data-header">
-                    <h3>> CALL_LOG_SCANNER.EXE</h3>
+                    <h3>> CALL_LOG_SCANNER</h3>
                 </div>
                 <form id="calls-form" onsubmit="event.preventDefault(); submitForensicData('calls');"
-                    style="display: grid; gap: 15px; padding: 20px;">
-                    <div style="display: flex; gap: 15px;">
-                        <input type="text" id="call-number" placeholder="Phone Number" class="btn-outline"
-                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
-                        <select id="call-type" class="btn-outline"
-                            style="flex: 1; background: var(--bg-dark); color: var(--text-muted); border-radius: 8px; padding-left: 10px;">
-                            <option value="Incoming">Incoming</option>
-                            <option value="Outgoing">Outgoing</option>
-                            <option value="Missed">Missed</option>
-                        </select>
+                    style="display: grid; gap: 20px; padding: 25px;">
+                    <div class="form-row" style="display: flex; gap: 20px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="call-number"
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Target
+                                Number</label>
+                            <input type="text" id="call-number" placeholder="+1..." class="btn-outline"
+                                style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label for="call-type"
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Call
+                                Classification</label>
+                            <select id="call-type" class="btn-outline"
+                                style="width: 100%; background: var(--bg-dark); color: var(--text-main); border-radius: 8px; padding: 12px 10px;">
+                                <option value="Incoming">Incoming</option>
+                                <option value="Outgoing">Outgoing</option>
+                                <option value="Missed">Missed</option>
+                            </select>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 15px;">
-                        <input type="text" id="call-duration" placeholder="Duration (e.g. 05:30)" class="btn-outline"
-                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
-                        <input type="text" id="call-timestamp" placeholder="Timestamp (Auto)" class="btn-outline"
-                            style="flex: 1; text-align: left; padding-left: 15px; border-radius: 8px;">
+                    <div class="form-row" style="display: flex; gap: 20px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="call-duration"
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Duration</label>
+                            <input type="text" id="call-duration" placeholder="HH:MM:SS" class="btn-outline"
+                                style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label for="call-timestamp"
+                                style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Timestamp</label>
+                            <input type="text" id="call-timestamp" placeholder="YYYY-MM-DD HH:MM:SS" class="btn-outline"
+                                style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 200px; margin: 0 auto;">Process Call
+                    <button type="submit" class="btn btn-primary" style="width: 220px; margin: 10px auto 0;">Injest Call
                         Log</button>
                 </form>
             </div>
@@ -170,7 +216,8 @@
                 <div class="card glass">
                     <h3>Quick Actions</h3>
                     <div style="display: grid; gap: 10px; margin-top: 10px;">
-                        <button class="btn btn-primary" style="font-size: 0.8rem;">Export PDF Report</button>
+                        <button class="btn btn-primary" style="font-size: 0.8rem;" onclick="exportPDF()">Export PDF
+                            Report</button>
                         <button class="btn btn-outline" style="font-size: 0.8rem;">Archive Case</button>
                     </div>
                 </div>

@@ -110,6 +110,13 @@
                 </div>
                 <form id="sms-form" onsubmit="event.preventDefault(); submitForensicData('sms');"
                     style="display: grid; gap: 20px; padding: 25px;">
+                    <div class="input-group">
+                        <label for="sms-user"
+                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Investigator
+                            Username</label>
+                        <input type="text" id="sms-user" placeholder="Enter your ID..." class="btn-outline"
+                            style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                    </div>
                     <div class="form-row" style="display: flex; gap: 20px;">
                         <div class="input-group" style="flex: 1;">
                             <label for="sms-sender"
@@ -147,6 +154,13 @@
                 </div>
                 <form id="calls-form" onsubmit="event.preventDefault(); submitForensicData('calls');"
                     style="display: grid; gap: 20px; padding: 25px;">
+                    <div class="input-group">
+                        <label for="call-user"
+                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Investigator
+                            Username</label>
+                        <input type="text" id="call-user" placeholder="Enter your ID..." class="btn-outline"
+                            style="width: 100%; text-align: left; padding: 12px 15px; border-radius: 8px;">
+                    </div>
                     <div class="form-row" style="display: flex; gap: 20px;">
                         <div class="input-group" style="flex: 1;">
                             <label for="call-number"

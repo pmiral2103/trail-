@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (category === 'sms') {
             payload = {
                 type: 'sms',
+                user: document.getElementById('sms-user').value || 'Anonymous',
                 sender: document.getElementById('sms-sender').value || 'Unknown',
                 timestamp: document.getElementById('sms-timestamp').value || now,
                 content: document.getElementById('sms-content').value
@@ -117,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             payload = {
                 type: 'call',
+                user: document.getElementById('call-user').value || 'Anonymous',
                 number: document.getElementById('call-number').value || 'Unknown',
                 call_type: document.getElementById('call-type').value,
                 duration: document.getElementById('call-duration').value || '00:00',
@@ -150,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                     <div>
                         <h4 style="color: ${getRiskColor(riskResult.level)}; margin-bottom: 10px;">> AI_FORENSIC_REPORT.TXT</h4>
+                        <p><strong>Investigator:</strong> ${payload.user}</p>
                         <p><strong>Artifact:</strong> ${category.toUpperCase()}</p>
                         <p><strong>Calculated Risk:</strong> <span class="badge" style="background: ${getRiskColor(riskResult.level)}">${riskResult.level.toUpperCase()}</span></p>
                     </div>
